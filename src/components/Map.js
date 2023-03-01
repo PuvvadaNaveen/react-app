@@ -6,22 +6,20 @@ export default class MapComponent extends Component {
         super(props);
 
         this.state = {
-            api_url: 'https://data.edmonton.ca/resource/akzz-54k3.json',
             map: false,
             viewState: {
                 zoom: 14,
                 center: [ -113.4796, 53.6028 ]
-            },
-            data: null
+            }
         }
     }
 
-    static initializeMap(state) {
+    static initializeMap(state, viewState) {
         MapboxGL.accessToken = process.env.REACT_APP_MAPBOX_TOKEN;
         let map = new MapboxGL.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v9',
-            ...state.viewState
+            ...viewState
         });
 
         map.on('load', () => {
@@ -70,48 +68,10 @@ export default class MapComponent extends Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        const { map, data } = prevState;
-        if(data && !map) return MapComponent.initializeMap(prevState);
+        const { map, data } = nextProps;
+        if(data && !map) return MapComponent.initializeMap(nextProps, prevState.viewState);
         else return null;
     };
-
-    createFeatureCollection(data) {
-        let features = [];
-        data.forEach((feature) => {
-            features.push({
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [
-                        parseFloat(feature.longitude),
-                        parseFloat(feature.latitude)
-                    ]
-                },
-                "properties": {
-                    "name": "Traffic Enforcement Cam's Edmond",
-                    "description": feature.location_description,
-                    "reason": feature.reason_code_s_,
-                    "speedLimit": feature.speed_limit
-                }
-            })
-        });
-
-        return {
-            "type": "FeatureCollection",
-            "features": features
-        }
-    }
-
-    componentDidMount() {
-        const {data, api_url} = this.state;
-
-        if(!data){
-            fetch(api_url, {method: 'GET'})
-                .then(response => response.json())
-                .then(response => this.createFeatureCollection(response))
-                .then(response => this.setState({data: response}))
-        }
-    }
 
     render () {
         return (
