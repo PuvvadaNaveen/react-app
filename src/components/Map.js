@@ -24,14 +24,57 @@ export default class MapComponent extends Component {
             ...this.state.viewState
         });
 
+        map.on('load', () => {
+            map.addLayer({
+                "id": "points",
+                "type": "circle",
+                "source": {
+                    "type": "geojson",
+                    "data": this.state.data
+                },
+                "paint": {
+                    "circle-radius": 5,
+                    "circle-color": '#B4D455'
+                }
+            })
+        })
         this.setState({ map });
     }
+
+    createFeatureCollection(data) {
+        let features = [];
+        data.forEach((feature) => {
+            features.push({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
+                        parseFloat(feature.longitude),
+                        parseFloat(feature.latitude)
+                    ]
+                },
+                "properties": {
+                    "name": "Traffic Enforcement Cam's Edmond",
+                    "description": feature.location_description,
+                    "reason": feature.reason_code_s_,
+                    "speedLimit": feature.speed_limit
+                }
+            })
+        });
+
+        return {
+            "type": "FeatureCollection",
+            "features": features
+        }
+    }
+
     componentDidMount() {
         const {data, api_url} = this.state;
 
         if(!data){
             fetch(api_url, {method: 'GET'})
                 .then(response => response.json())
+                .then(response => this.createFeatureCollection(response))
                 .then(response => this.setState({data: response}))
         }
     }
@@ -40,20 +83,6 @@ export default class MapComponent extends Component {
         const { map, data } = this.state;
         if(data && !map) this.initializeMap()
         return (
-            // <Map
-            //     {...this.state.viewState}
-            //     mapStyle="mapbox://styles/mapbox/streets-v9"
-            //     mapboxAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
-            //     style={{width: 700,height: 600}}
-            //     onMove={(viewState) =>
-            //         this.setState({viewState})
-            //     }>
-            //     {data && data.map((coord, i) => (
-            //         <Marker key={i} longitude={coord.longitude} latitude={coord.latitude} color="red">
-            //             <Pin />
-            //         </Marker>
-            //     ))}
-            // </Map>
             <div style={{width:900, height:750}} id="map" />
         )
     }
