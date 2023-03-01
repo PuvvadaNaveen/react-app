@@ -37,7 +37,27 @@ export default class MapComponent extends Component {
                     "circle-color": '#B4D455'
                 }
             })
-        })
+        });
+
+        map.on('click', 'points', (e) => {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const { description, speedLimit, reason, name } = e.features[0].properties;
+
+            while(Math.abs(e.lngLat.lng - coordinates[0]) > 100) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+
+            new MapboxGL.Popup()
+                .setLngLat(coordinates)
+                .setHTML(`
+                <h6>${name}</h6><br />
+                <h7>${description}</h7><br />
+                <em><strong>Speed Limit: </strong>${speedLimit}</em><br />
+                <p>${reason}</p>
+                `)
+                .addTo(map);
+        });
+
         this.setState({ map });
     }
 
